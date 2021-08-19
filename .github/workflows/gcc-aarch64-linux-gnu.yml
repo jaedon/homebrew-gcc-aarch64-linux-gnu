@@ -1,0 +1,47 @@
+name: gcc-aarch64-linux-gnu for macOS
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build gcc-aarch64-linux-gnu
+    runs-on: macos-11
+    strategy:
+      matrix:
+        gcc-major-version: [11, 6]
+        include:
+          - gcc-major-version: 11
+            gcc-version: 11.2.0
+          - gcc-major-version: 6
+            gcc-version: 6.5.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up crosstool-ng
+        run: brew install crosstool-ng --HEAD
+      - name: Build
+        run: |
+          mkdir -p /private/tmp/runner
+          hdiutil create ${HOME}/work.sparseimage -volname gcc-aarch64-linux-gnu -type SPARSE -size 20g -fs HFSX
+          hdiutil mount ${HOME}/work.sparseimage -mountroot /private/tmp/runner
+          mkdir -p /usr/local/Cellar/gcc-aarch64-linux-gnu
+          hdiutil create ${HOME}/install.sparseimage -volname ${{ matrix.gcc-version }} -type SPARSE -size 1g -fs HFSX
+          hdiutil mount ${HOME}/install.sparseimage -mountroot /usr/local/Cellar/gcc-aarch64-linux-gnu
+          cp gcc-${{ matrix.gcc-major-version }}-aarch64-linux-gnu.config /private/tmp/runner/gcc-aarch64-linux-gnu/defconfig
+          cd /private/tmp/runner/gcc-aarch64-linux-gnu
+          ct-ng defconfig
+          sed -i -e '/CT_RM_RF_PREFIX_DIR/s/y$/n/' .config
+          sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
+          sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
+          ct-ng build
+          cd /usr/local/Cellar
+          tar --exclude=gcc-aarch64-linux-gnu/11.2.0/.fseventsd -zcf /private/tmp/runner/gcc-aarch64-linux-gnu/gcc-aarch64-linux-gnu--${{ matrix.gcc-version }}.big_sur.bottle.tar.gz gcc-aarch64-linux-gnu/${{ matrix.gcc-version }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: gcc-${{ matrix.gcc-major-version }}-aarch64-linux-gnu
+          tag_name: gcc-${{ matrix.gcc-major-version }}-aarch64-linux-gnu
+          files: /private/tmp/runner/gcc-aarch64-linux-gnu/gcc-aarch64-linux-gnu--${{ matrix.gcc-version }}.big_sur.bottle.tar.gz
