@@ -2,7 +2,10 @@ name: gcc-aarch64-linux-gnu for macOS
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    paths-ignore:
+      - 'Formula/**'
 
 jobs:
   build:
@@ -34,6 +37,7 @@ jobs:
           cd /private/tmp/runner/gcc-aarch64-linux-gnu
           ct-ng defconfig
           sed -i -e '/CT_RM_RF_PREFIX_DIR/s/y$/n/' .config
+          sed -i -e '/CT_PREFIX_DIR_RO/s/y$/n/' .config
           sed -i -e '/CT_LOG_PROGRESS_BAR/s/y$/n/' .config
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
           ct-ng build
@@ -43,5 +47,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: gcc-${{ matrix.gcc-major-version }}-aarch64-linux-gnu
+          body: 'Pre-built ARM/Linux cross compilers for macOS'
           tag_name: gcc-${{ matrix.gcc-major-version }}-aarch64-linux-gnu
           files: /private/tmp/runner/gcc-aarch64-linux-gnu/gcc-aarch64-linux-gnu--${{ matrix.gcc-version }}.big_sur.bottle.tar.gz
