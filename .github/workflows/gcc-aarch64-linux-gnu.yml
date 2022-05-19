@@ -13,10 +13,10 @@ jobs:
     runs-on: macos-11
     strategy:
       matrix:
-        gcc-major-version: [11, 6]
+        gcc-major-version: [12, 6]
         include:
-          - gcc-major-version: 11
-            gcc-version: 11.2.0
+          - gcc-major-version: 12
+            gcc-version: 12.1.0
           - gcc-major-version: 6
             gcc-version: 6.5.0
 
@@ -42,7 +42,7 @@ jobs:
           sed -i -e '/CT_LOCAL_TARBALLS_DIR/s/HOME/CT_TOP_DIR/' .config
           ct-ng build
           cd /usr/local/Cellar
-          tar --exclude=gcc-aarch64-linux-gnu/11.2.0/.fseventsd -zcf /private/tmp/runner/gcc-aarch64-linux-gnu/gcc-aarch64-linux-gnu--${{ matrix.gcc-version }}.big_sur.bottle.tar.gz gcc-aarch64-linux-gnu/${{ matrix.gcc-version }}
+          tar --exclude=gcc-aarch64-linux-gnu/12.1.0/.fseventsd -zcf /private/tmp/runner/gcc-aarch64-linux-gnu/gcc-aarch64-linux-gnu--${{ matrix.gcc-version }}.big_sur.bottle.tar.gz gcc-aarch64-linux-gnu/${{ matrix.gcc-version }}
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
